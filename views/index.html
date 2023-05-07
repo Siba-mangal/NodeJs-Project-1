@@ -1,1 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Food Order</title>
+  </head>
+  <body>
+    <form onsubmit="saveToApi(event) " method="POST">
+      <label for="Price">Dish Price</label>
+      <input type="number" id="Price" />
 
+      <label for="Product">Dish Name</label>
+      <input type="text" id="Product" />
+
+      <label for="Category">Pick a Table</label>
+      <select id="Category">
+        <option>Table 1</option>
+        <option>Table 2</option>
+        <option>Table 3</option>
+      </select>
+
+      <input type="submit" value="Add Product" />
+    </form>
+
+    <h3>Table 1:</h3>
+    <ul id="Table-1"></ul>
+    <h3>Table 2:</h3>
+    <ul id="Table-2"></ul>
+    <h3>Table 3:</h3>
+    <ul id="Table-3"></ul>
+    <!-- <script src="script2.js"></script>-->
+    <script>
+      const ulTable1 = document.getElementById("Table-1");
+      const ulTable2 = document.getElementById("Table-2");
+      const ulTable3 = document.getElementById("Table-3");
+
+      function saveToApi(event) {
+        event.preventDefault();
+        //console.log(event.target.Category.value);
+        const price = event.target.Price.value;
+        const productName = event.target.Product.value;
+        const table = event.target.Category.value;
+        const obj = {
+          price,
+          productName,
+          table,
+        };
+        axios
+          .post("http://localhost:3000/user/addFood", obj)
+          .then((response) => {
+            showListofRegisteredUser(response.data);
+            console.log(response);
+          })
+          .catch((error) => console.log(error));
+
+        event.target.Price.value = "";
+        event.target.Product.value = "";
+        event.target.Category.value = "";
+        location.reload();
+      }
+
+      window.addEventListener("DOMContentLoaded", (event) => {
+        axios
+          .get("http://localhost:3000/user/getFood")
+          .then((response) => {
+            for (var i = 0; i < response.data.allUsers.length; i++) {
+              showListofRegisteredUser(response.data.allUsers[i]);
+            }
+            console.log(response);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      });
+
+      function showListofRegisteredUser(user) {
+        let li = `<li id='${user.id}'>${user.price} - ${user.productName} - ${user.tableNo}  <button onclick=deleteUser('${user.id}')>Delete</button></li>`;
+
+        if (user.tableNo == "Table 1") {
+          ulTable1.innerHTML += li;
+        }
+        if (user.tableNo == "Table 2") {
+          ulTable2.innerHTML += li;
+        }
+        if (user.tableNo == "Table 3") {
+          ulTable3.innerHTML += li;
+        }
+      }
+
+      function deleteUser(UserId) {
+        //localStorage.removeItem(email)
+
+        axios
+          .delete(`http://localhost:3000/user/delete-food/${UserId}`)
+          .then((response) => {
+            removeItemFromScreen(response.data);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      function removeItemFromScreen(expense) {
+        const category = expense.deletedFood.table;
+
+        const elem = document.getElementById(expense.deletedFood.id);
+
+        //console.log(elem.innerHTML.split("-")[2].split(" ")[1]);
+        //const category = elem.innerHTML.split("-")[2].split(" ")[1];
+        //const li = expense.deletedExpense;
+
+        if (category == "Table 1") {
+          ulTable1.removeChild(elem);
+        }
+        if (category == "Table 2") {
+          ulTable2.removeChild(elem);
+        }
+        if (category == "Table 2") {
+          ulTable3.removeChild(elem);
+        }
+        location.reload();
+      }
+    </script>
+  </body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.4/axios.min.js"></script>
+</html>
